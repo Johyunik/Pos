@@ -156,29 +156,53 @@ public class Pos_pos extends JPanel implements ActionListener{
 		}//[결재] 버튼 클릭 시
 		else if(e.getActionCommand() == "결제") {
 			// "결재하시겠습니까?"라는 다이얼로그 창 출력(JOptionPane.showConfirmDialog())
-			JOptionPane.showConfirmDialog(null, "결제하시겠습니까?", "Select an Option", JOptionPane.YES_NO_CANCEL_OPTION);
+			int result = JOptionPane.showConfirmDialog(null, "결제하시겠습니까?");
 			// "YES"를 누르면 "총금액은 ~입니다"를 출력한 후 사용자로부터 숫자 입력받기(JOptionPane.showInputDialog())
-			JOptionPane.showInputDialog("총 금액은 " + total + "원 입니다. \n지불하실 금액을 입력해주세요.");
+			if(result == 0) {
+				int input = Integer.parseInt(JOptionPane.showInputDialog("총 금액은 " + txtTotal.getText() +"원 입니다"));
+				if(input > Integer.parseInt(txtTotal.getText())) {
+					JOptionPane.showMessageDialog(null, "지불하신 금액은 " + input +"원 이고 " + "\n상품의 합계는 " + txtTotal.getText() +"원 이며, \n거스름돈은 " + (input-Integer.parseInt(txtTotal.getText())) + "원 입니다");
+					stockUpdate(tableModel);
+					clean();					
+				}else {
+					JOptionPane.showMessageDialog(null, "금액이 부족합니다.\n결제를 취소합니다");
+				}
+			}
+		}
 			// 사용자 입력금액이 총금액보다 크면 "지불금액,거스름돈"을 출력한 후 DB 업데이트(stockUpdate), 모든 컴포넌트 내의 데이터 초기화(clean())
 			
 			// 그렇지 않으면 "금액이 적습니다" Dialog 창 출력
 			
-		}//[취소] 버튼 클릭 시
+		//[취소] 버튼 클릭 시
 		else if(e.getActionCommand() == "취소"){
 			// "주문을 취소하시겠습니까?" Dialog 창 출력
 			JOptionPane.showMessageDialog(null, "주문을 취소하시겠습니까?", "Message", JOptionPane.INFORMATION_MESSAGE);
-			// 모든 컴포넌트의 데이터 초기화
+			clean();
 		}
 	}
 	
 	// JTable, 수량과 총가격의 JTextField 내 데이터 초기화
 	public void clean() {
-		
+		int rows = tableModel.getRowCount();
+		for(int i=rows-1; i>=0; i--)
+			tableModel.removeRow(i);
+		txtTotal.setText("");
+		txtStock.setText("");
 	}
 	
 	// JTable에 출력된 모든 데이터의 상품명, 재고량, 가격을 이용하여 DB 데이터 업데이트 
 	public void stockUpdate(DefaultTableModel model) {
-					
+		for(int i=0; i<model.getRowCount(); i++) {
+			String name = (String)model.getValueAt(i, 0);
+			String stock = (String)model.getValueAt(i, 1);
+			String price = (String)model.getValueAt(i, 2);
+			
+			String total = dao.getstock(name);
+			
+			int tot = Integer.parseInt(total);
+			
+			dao.updateStock(total, stock, name);			
+		}
 		}		
 	}
 
